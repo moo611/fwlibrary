@@ -1,6 +1,14 @@
 <template>
   <div>
     <div class="header">
+      
+        <el-input style="width: 200px; margin-right: 20px;" v-model="queryParams.name" placeholder="请输入书名"></el-input>
+        <el-input style="width: 200px; margin-right: 20px;" v-model="queryParams.author" placeholder="请输入作者"></el-input>
+        <el-select style="width: 200px; margin-right: 20px;" v-model="queryParams.category" placeholder="请选择类别">
+          <el-option v-for="item in categoryOptions2" :key="item.value" :label="item.label" :value="item.value" />
+        </el-select>
+      
+      <el-button @click="getBookList" type="primary">查询</el-button>
 
       <el-button v-show="getUser().role == '0'" @click="handleAdd" type="primary" class="btn-add">新增</el-button>
     </div>
@@ -15,6 +23,7 @@
       <el-table-column prop="name" label="名称" />
       <el-table-column prop="category" label="类别" :formatter="categoryFormatter" />
       <el-table-column prop="author" label="作者" />
+      <el-table-column prop="price" label="价格（元）" />
       <el-table-column prop="storeNum" label="库存" />
       <el-table-column prop="createTime" label="创建时间" />
 
@@ -61,6 +70,9 @@
         <el-form-item label="作者">
           <el-input v-model="form.author" />
         </el-form-item>
+        <el-form-item label="价格">
+          <el-input v-model="form.price" type="number" />
+        </el-form-item>
         <el-form-item label="封面图">
           <el-upload ref="uploadRef" class="avatar-uploader" action="http://8.155.12.207:8888/upload/avatar"
             :show-file-list="false" :on-success="handleAvatarSuccess" :before-upload="beforeAvatarUpload">
@@ -87,8 +99,24 @@
       <div style="width: 100%;height: 500px; padding: 20px; box-sizing: border-box;">
         <span style="font-size: 16px;">{{ content }}</span>
       </div>
-      
 
+
+    </el-dialog>
+    <el-dialog v-model="dialogVisible3" width="500" @close="clearData3">
+      <el-date-picker
+        v-model="selectDate"
+        type="date"
+        placeholder="请选择"
+        
+      />
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="dialogVisible3 = false">取消</el-button>
+          <el-button type="primary" @click="saveBorrow">
+            打卡
+          </el-button>
+        </div>
+      </template>
     </el-dialog>
   </div>
 </template>
@@ -102,16 +130,18 @@ import { getUser } from '../../utils/auth';
 const uploadRef = ref(null)
 let mode = '0'
 
-
+const selectDate = ref('')
 
 const queryParams = reactive({
   pageNum: 1,
   pageSize: 10,
-
+  category:'all',
+  author:'',
+  name:''
 })
 const state = reactive({
   data: {},
-  curBook: {}
+  curRow:null
 })
 
 const form = reactive({
@@ -121,10 +151,11 @@ const form = reactive({
   content: '',
   author: '',
   id: '',
-
+  price: null,
 })
 const dialogVisible1 = ref(false)
-const dialogVisible2=ref(false)
+const dialogVisible2 = ref(false)
+const dialogVisible3=ref(false)
 const clearData = () => {
   form.name = ''
   form.imageUrl = ''
@@ -132,14 +163,26 @@ const clearData = () => {
   form.content = ''
   form.author = ''
   form.id = ''
+  form.price = null
   mode = '0'
 
 }
 const content = ref('')
-const clearData2=()=>{
+const clearData2 = () => {
   content.value = ''
 }
+const clearData3=()=>{
+  state.curRow = null
+  selectDate.value=''
+}
 const categoryOptions = [{ value: '0', label: '文学类' },
+{ value: '1', label: '人文社科' },
+{ value: '2', label: '自然科学' },
+{ value: '3', label: '艺术与生活' },
+{ value: '4', label: '经济与管理' }]
+
+
+const categoryOptions2 = [{value: 'all', label: '全部'},{ value: '0', label: '文学类' },
 { value: '1', label: '人文社科' },
 { value: '2', label: '自然科学' },
 { value: '3', label: '艺术与生活' },
@@ -185,8 +228,12 @@ const beforeAvatarUpload = (rawFile) => {
 
 
 const getBookList = () => {
+  let params = {...queryParams}
 
-  axios.get('book/list', { params: queryParams }).then(res => {
+  if(queryParams.category == 'all'){
+    params.category = null
+  }
+  axios.get('book/list', { params: params }).then(res => {
 
     state.data = res
 
@@ -248,19 +295,24 @@ const handleDel = (index, row) => {
   })
 }
 
-const handleView = (index,row)=>{
-  dialogVisible2.value=true
+const handleView = (index, row) => {
+  dialogVisible2.value = true
   content.value = row.content
 }
 
-const handleBorrow=(index,row)=>{
-  let params = {
-    bookId:row.id,
-    username:getUser().username,
+const handleBorrow = (index, row) => {
+  state.curRow = row
+  dialo
+}
 
+const saveBorrow=()=>{
+  let params = {
+    bookId: curRow.id,
+    username: getUser().username,
+    backdate:selectDate.value
   }
 
-  axios.post('borrow',params).then(res=>{
+  axios.post('borrow', params).then(res => {
     ElMessage.success('借阅成功')
     getBookList()
   })
