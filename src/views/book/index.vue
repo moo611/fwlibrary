@@ -1,13 +1,13 @@
 <template>
   <div>
     <div class="header">
-      
-        <el-input style="width: 200px; margin-right: 20px;" v-model="queryParams.name" placeholder="请输入书名"></el-input>
-        <el-input style="width: 200px; margin-right: 20px;" v-model="queryParams.author" placeholder="请输入作者"></el-input>
-        <el-select style="width: 200px; margin-right: 20px;" v-model="queryParams.category" placeholder="请选择类别">
-          <el-option v-for="item in categoryOptions2" :key="item.value" :label="item.label" :value="item.value" />
-        </el-select>
-      
+
+      <el-input style="width: 200px; margin-right: 20px;" v-model="queryParams.name" placeholder="请输入书名"></el-input>
+      <el-input style="width: 200px; margin-right: 20px;" v-model="queryParams.author" placeholder="请输入作者"></el-input>
+      <el-select style="width: 200px; margin-right: 20px;" v-model="queryParams.category" placeholder="请选择类别">
+        <el-option v-for="item in categoryOptions2" :key="item.value" :label="item.label" :value="item.value" />
+      </el-select>
+
       <el-button @click="getBookList" type="primary">查询</el-button>
 
       <el-button v-show="getUser().role == '0'" @click="handleAdd" type="primary" class="btn-add">新增</el-button>
@@ -102,18 +102,21 @@
 
 
     </el-dialog>
+
     <el-dialog v-model="dialogVisible3" width="500" @close="clearData3">
-      <el-date-picker
-        v-model="selectDate"
-        type="date"
-        placeholder="请选择"
-        
-      />
+      <el-form class="form" :model="form" label-width="auto" style="max-width: 600px">
+        <el-form-item label="归还日期">
+          <el-date-picker v-model="selectDate" type="date" placeholder="请选择" value-format="YYYY-MM-DD" />
+        </el-form-item>
+
+
+      </el-form>
+
       <template #footer>
         <div class="dialog-footer">
           <el-button @click="dialogVisible3 = false">取消</el-button>
           <el-button type="primary" @click="saveBorrow">
-            打卡
+            确定
           </el-button>
         </div>
       </template>
@@ -135,13 +138,13 @@ const selectDate = ref('')
 const queryParams = reactive({
   pageNum: 1,
   pageSize: 10,
-  category:'all',
-  author:'',
-  name:''
+  category: 'all',
+  author: '',
+  name: ''
 })
 const state = reactive({
   data: {},
-  curRow:null
+  curRow: null
 })
 
 const form = reactive({
@@ -155,7 +158,7 @@ const form = reactive({
 })
 const dialogVisible1 = ref(false)
 const dialogVisible2 = ref(false)
-const dialogVisible3=ref(false)
+const dialogVisible3 = ref(false)
 const clearData = () => {
   form.name = ''
   form.imageUrl = ''
@@ -171,9 +174,9 @@ const content = ref('')
 const clearData2 = () => {
   content.value = ''
 }
-const clearData3=()=>{
+const clearData3 = () => {
   state.curRow = null
-  selectDate.value=''
+  selectDate.value = ''
 }
 const categoryOptions = [{ value: '0', label: '文学类' },
 { value: '1', label: '人文社科' },
@@ -182,7 +185,7 @@ const categoryOptions = [{ value: '0', label: '文学类' },
 { value: '4', label: '经济与管理' }]
 
 
-const categoryOptions2 = [{value: 'all', label: '全部'},{ value: '0', label: '文学类' },
+const categoryOptions2 = [{ value: 'all', label: '全部' }, { value: '0', label: '文学类' },
 { value: '1', label: '人文社科' },
 { value: '2', label: '自然科学' },
 { value: '3', label: '艺术与生活' },
@@ -228,9 +231,9 @@ const beforeAvatarUpload = (rawFile) => {
 
 
 const getBookList = () => {
-  let params = {...queryParams}
+  let params = { ...queryParams }
 
-  if(queryParams.category == 'all'){
+  if (queryParams.category == 'all') {
     params.category = null
   }
   axios.get('book/list', { params: params }).then(res => {
@@ -302,19 +305,20 @@ const handleView = (index, row) => {
 
 const handleBorrow = (index, row) => {
   state.curRow = row
-  dialo
+  dialogVisible3.value = true
 }
 
-const saveBorrow=()=>{
+const saveBorrow = () => {
   let params = {
-    bookId: curRow.id,
+    bookId: state.curRow.id,
     username: getUser().username,
-    backdate:selectDate.value
+    backdate: selectDate.value
   }
 
   axios.post('borrow', params).then(res => {
     ElMessage.success('借阅成功')
     getBookList()
+    dialogVisible3.value=false
   })
 }
 

@@ -13,20 +13,21 @@
       <el-table-column prop="backdate" label="归还日期" />
       <el-table-column label="操作">
         <template #default="scope">
-          <el-button type="primary" @click="handleEdit(scope.$index, scope.row)" :disabled="scope.row.status=='1'">归还</el-button>
+          <el-button type="primary" @click="handleEdit(scope.$index, scope.row)"
+            :disabled="scope.row.status == '1'">归还</el-button>
           <el-button type="success" @click="handleLong(scope.$index, scope.row)">续借</el-button>
         </template>
       </el-table-column>
     </el-table>
     <el-pagination layout="prev, pager, next" :total="state.data.total" :page-size="queryParams.pageSize"
       @change="onPageChange" />
-      <el-dialog v-model="dialogVisible1" width="500" @close="clearData">
-      <el-date-picker
-        v-model="selectDate"
-        type="date"
-        placeholder="请选择"
-        value-format="YYYY-MM-DD"
-      />
+    <el-dialog v-model="dialogVisible1" width="500" @close="clearData">
+      <el-form class="form" :model="form" label-width="auto" style="max-width: 600px">
+        <el-form-item label="归还日期">
+          <el-date-picker v-model="selectDate" type="date" placeholder="请选择" value-format="YYYY-MM-DD" />
+        </el-form-item>
+      </el-form>
+
       <template #footer>
         <div class="dialog-footer">
           <el-button @click="dialogVisible1 = false">取消</el-button>
@@ -48,17 +49,17 @@ import { ElMessage } from 'element-plus';
 import { getUser } from '../../utils/auth';
 const dialogVisible1 = ref(false)
 const selectDate = ref('')
-const clearData=()=>{
+const clearData = () => {
   state.curBorrow = {}
-  selectDate.value=''
+  selectDate.value = ''
 }
 
 
 const queryParams = reactive({
   pageNum: 1,
   pageSize: 10,
-  username:'',
-  status:''
+  username: '',
+  status: ''
 })
 const state = reactive({
   data: {},
@@ -86,18 +87,18 @@ const handleEdit = (index, row) => {
   })
 }
 
-const handleLong=(index,row)=>{
+const handleLong = (index, row) => {
 
-  dialogVisible1.value=true
+  dialogVisible1.value = true
   state.curBorrow = row
   selectDate.value = row.backdate
 }
 
-const updateBorrow=()=>{
+const updateBorrow = () => {
   state.curBorrow.backdate = selectDate.value
-  axios.put('borrow',state.curBorrow).then(res=>{
+  axios.put('borrow', state.curBorrow).then(res => {
     ElMessage.success('续借成功')
-    dialogVisible1.value=false
+    dialogVisible1.value = false
     getBorrowList()
   })
 }
